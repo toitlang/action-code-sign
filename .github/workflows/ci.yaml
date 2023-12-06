@@ -1,0 +1,101 @@
+name: test-action
+on: push
+
+env:
+  SECRET_CERTIFICATE: ${{ secrets.DIGICERT_CERTIFICATE }}
+  SECRET_PASSWORD: ${{ secrets.DIGICERT_PASSWORD }}
+  SECRET_API_KEY: ${{ secrets.DIGICERT_API_KEY }}
+  SECRET_FINGERPRINT: ${{ secrets.DIGICERT_FINGERPRINT }}
+  DIGICERT_HOST: https://clientauth.one.digicert.com
+  KEYPAIR_ALIAS: key_554917318
+
+jobs:
+  test-action:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, ubuntu-20.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create a Windows executable
+        shell: bash
+        run: |
+          echo "package main" > app.go
+          echo "func main() {}" >> app.go
+          GOOS=windows GOARCH=amd64 go build -o app.exe app.go
+
+      - name: Create input files
+        shell: bash
+        run: |
+          TEST_DIR_SINGLE=test-${{ matrix.os }}-single
+          mkdir -p $TEST_DIR_SINGLE
+          cp app.exe $TEST_DIR_SINGLE
+          echo "TEST_DIR_SINGLE=$TEST_DIR_SINGLE" >> $GITHUB_ENV
+
+          TEST_DIR_MULTI=test-${{ matrix.os }}-multi
+          mkdir -p $TEST_DIR_MULTI
+          cp app.exe $TEST_DIR_MULTI
+          cp app.exe $TEST_DIR_MULTI/app2.exe
+          echo "TEST_DIR_MULTI=$TEST_DIR_MULTI" >> $GITHUB_ENV
+
+      - name: Sign single file
+        uses: ./
+        with:
+          certificate: ${{ env.SECRET_CERTIFICATE }}
+          certificate-password: ${{ env.SECRET_PASSWORD }}
+          certificate-fingerprint: ${{ env.SECRET_FINGERPRINT }}
+          api-key: ${{ env.SECRET_API_KEY }}
+          keypair-alias: ${{ env.KEYPAIR_ALIAS }}
+          path: '${{ env.TEST_DIR_SINGLE }}/app.exe'
+
+      # This also tests that we don't download the whole digicert tools again.
+      - name: Sign multiple files in a directory
+        uses: ./
+        with:
+          certificate: ${{ env.SECRET_CERTIFICATE }}
+          certificate-password: ${{ env.SECRET_PASSWORD }}
+          certificate-fingerprint: ${{ env.SECRET_FINGERPRINT }}
+          api-key: ${{ env.SECRET_API_KEY }}
+          keypair-alias: ${{ env.KEYPAIR_ALIAS }}
+          path: ${{ env.TEST_DIR_MULTI }}
+
+      - name: Upload signed files
+        uses: actions/upload-artifact@v3
+        with:
+          name: signed-files
+          path: |
+            ${{ env.TEST_DIR_SINGLE }}
+            ${{ env.TEST_DIR_MULTI }}
+
+  verify-signatures:
+    runs-on: windows-latest
+    needs: test-action
+    steps:
+      # Download signtool.
+      - name: Configure Digicert Secure Software Manager
+        uses: digicert/ssm-code-signing@v0.0.2
+        env:
+          SM_HOST: ${{ env.DIGICERT_HOST }}
+          SM_API_KEY: ${{ env.SECRET_API_KEY }}
+          SM_CLIENT_CERT_PASSWORD: ${{ env.SECRET_PASSWORD }}
+
+      - name: Download signed files
+        uses: actions/download-artifact@v3
+        with:
+          name: signed-files
+
+      - name: Verify signatures
+        shell: bash
+        env:
+          SM_HOST: ${{ env.DIGICERT_HOST }}
+          SM_API_KEY: ${{ env.SECRET_API_KEY }}
+          SM_CLIENT_CERT_PASSWORD: ${{ env.SECRET_PASSWORD }}
+        run: |
+          find .
+          for file in $(find . -name '*.exe'); do
+            echo "Verifying $file"
+            smctl sign verify --input $file
+            # signtool verify /pa /v $file
+          done
