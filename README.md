@@ -10,10 +10,10 @@ Forked from https://github.com/cognitedata/code-sign-action. This action is modi
 ### Inputs
 - `certificate-host`: The host of the certificate. Defaults to `https://clientauth.one.digicert.com`.
 - `certificate`: The certificate to use for signing. Must be in base64.
-- `api-key`: The API key to use for signing.
 - `certificate-password`: The password for the certificate.
-- `keypair-alias`: The alias of the keypair to use for signing.
 - `certificate-fingerprint`: The fingerprint of the certificate to use for signing.
+- `api-key`: The API key to use for signing.
+- `keypair-alias`: The alias of the keypair to use for signing.
 - `path`: A path to a file or a folder that contains the files to sign.
 
 ### Examples
@@ -38,8 +38,8 @@ jobs:
           certificate: ${{ secrets.DIGICERT_CERTIFICATE }}
           api-key: ${{ secrets.DIGICERT_API_KEY }}
           certificate-password: ${{ secrets.DIGICERT_PASSWORD }}
-          keypair-alias: key_554917318
           certificate-fingerprint: ${{ secrets.DIGICERT_FINGERPRINT }}
+          keypair-alias: ${{ vars.DIGICERT_KEYPAIR_ALIAS }}
           path: test\test.exe
 ```
 
@@ -67,7 +67,7 @@ jobs:
           certificate: ${{ secrets.DIGICERT_CERTIFICATE }}
           api-key: ${{ secrets.DIGICERT_API_KEY }}
           certificate-password: ${{ secrets.DIGICERT_PASSWORD }}
-          keypair-alias: key_554917318
           certificate-fingerprint: ${{ secrets.DIGICERT_FINGERPRINT }}
+          keypair-alias: ${{ vars.DIGICERT_KEYPAIR_ALIAS }}
           path: test
 ```

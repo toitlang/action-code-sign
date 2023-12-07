@@ -7,7 +7,7 @@ env:
   SECRET_API_KEY: ${{ secrets.DIGICERT_API_KEY }}
   SECRET_FINGERPRINT: ${{ secrets.DIGICERT_FINGERPRINT }}
   DIGICERT_HOST: https://clientauth.one.digicert.com
-  KEYPAIR_ALIAS: key_554917318
+  KEYPAIR_ALIAS: ${{ vars.DIGICERT_KEYPAIR_ALIAS }}
 
 jobs:
   test-action:
