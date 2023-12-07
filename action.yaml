@@ -1,57 +1,96 @@
 name: "Sign file"
 description: "Sign a file using a code signing certificate"
 inputs:
-  path-to-binary:
-    description: "The folder that contains the files to sign"
+  certificate-host:
+    description: "The host of the certificate."
+    default: https://clientauth.one.digicert.com
+  certificate:
+    description: "The certificate to use for signing. Must be in base64."
     required: true
+  api-key:
+    description: "The API key to use for signing."
+    required: true
+  certificate-password:
+    description: "The password for the certificate."
+    required: true
+  keypair-alias:
+    description: "The alias of the keypair to use for signing."
+    required: true
+  certificate-fingerprint:
+    description: "The fingerprint of the certificate to use for signing."
+    required: true
+  path:
+    description: "A path to a file or a folder that contains the files to sign."
+
 runs:
   using: "composite"
   steps:
-    - name: Setup Certificate Windows
-      run: |
-        echo "${{env.CLIENT_CERTIFICATE }}" | base64 --decode > /d/cognite_code_signing_github_actions.p12
-      if: ${{ runner.os == 'Windows' && (!contains(env.DEPS_INSTALLED, 'TRUE')) }}
+    - name: Setup Certificate on Windows
+      if: ${{ runner.os == 'Windows' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE')) }}
       shell: bash
+      run: |
+        echo "${{ inputs.certificate }}" | base64 --decode > /d/code_signing_github_actions.p12
 
-    - name: Setup Certificate Linux
-      run: |
-        echo "${{env.CLIENT_CERTIFICATE }}" | base64 --decode | sudo install -D /dev/stdin /d/cognite_code_signing_github_actions.p12
-      if: ${{ runner.os == 'Linux' && (!contains(env.DEPS_INSTALLED, 'TRUE')) }}
+    - name: Setup Certificate on Linux
+      if: ${{ runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE')) }}
       shell: bash
+      run: |
+        echo "${{ inputs.certificate }}" | base64 --decode | sudo install -D /dev/stdin /d/code_signing_github_actions.p12
+
+
+    - name: Check that all required inputs are given
+      shell: bash
+      run: |
+        [[ "${{ inputs.api-key }}" ]] || { echo "input 'api-key' is empty"; exit 1; }
+        [[ "${{ inputs.certificate-password }}" ]] || { echo "input 'certificate-password' is empty"; exit 1; }
+        [[ "${{ inputs.keypair-alias }}" ]] || { echo "input 'keypair-alias' is empty"; exit 1; }
+        [[ "${{ inputs.certificate-fingerprint }}" ]] || { echo "input 'certificate-fingerprint' is empty"; exit 1; }
+        [[ -s /d/code_signing_github_actions.p12 ]] || { echo "input 'certificate' is empty"; exit 1; }
+        [[ -e "${{ inputs.path }}" ]] || { echo "input 'path' contains a non-existing file or folder: $p"; exit 1; }
 
     - name: Set required variables
-      id: variables
+      if: ${{ !contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE') }}
+      shell: bash
       run: |
-        echo "SM_HOST=${{ env.CERTIFICATE_HOST }}" >> "$GITHUB_ENV"
-        echo "SM_API_KEY=${{ env.CERTIFICATE_HOST_API_KEY }}" >> "$GITHUB_ENV"
-        echo "SM_CLIENT_CERT_PASSWORD=${{ env.CLIENT_CERTIFICATE_PASSWORD }}" >> "$GITHUB_ENV"
-        echo "SM_CODE_SIGNING_CERT_SHA1_HASH=${{ env.CERTIFICATE_SHA1_HASH }}" >> "$GITHUB_ENV"
-        if [ "${{ runner.os }}" == "Windows" ]
-        then
-          echo "SM_CLIENT_CERT_FILE=D:\\cognite_code_signing_github_actions.p12" >> "$GITHUB_ENV"
-        elif [ "${{ runner.os }}" == "Linux" ]
-        then
-          echo "SM_CLIENT_CERT_FILE=/d/cognite_code_signing_github_actions.p12" >> "$GITHUB_ENV"
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          echo "SM_CLIENT_CERT_FILE=D:\\code_signing_github_actions.p12" >> "$GITHUB_ENV"
+        elif [ "${{ runner.os }}" == "Linux" ]; then
+          echo "SM_CLIENT_CERT_FILE=/d/code_signing_github_actions.p12" >> "$GITHUB_ENV"
           echo "PKCS11_CONFIG=/tmp/DigiCert One Signing Manager Tools/smtools-linux-x64/pkcs11properties.cfg" >> "$GITHUB_ENV"
           echo "/tmp/DigiCert One Signing Manager Tools/smtools-linux-x64" >> $GITHUB_PATH
         fi
-      if: ${{ !contains(env.DEPS_INSTALLED, 'TRUE') }}
+
+    - name: Inputs
       shell: bash
+      run: |
+        echo "certificate-host: ${{ inputs.certificate-host }}"
+        echo "api-key: ${{ inputs.api-key }}"
+        echo "certificate-password: ${{ inputs.certificate-password }}"
+        echo "keypair-alias: ${{ inputs.keypair-alias }}"
+        echo "certificate-fingerprint: ${{ inputs.certificate-fingerprint }}"
+        echo "path: ${{ inputs.path }}"
 
     - name: Configure Digicert Secure Software Manager
+      if: ${{ !contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE') }}
       uses: digicert/ssm-code-signing@v0.0.2
       env:
-        SM_API_KEY: ${{ env.SM_API_KEY }}
-        SM_CLIENT_CERT_PASSWORD: ${{ env.SM_CLIENT_CERT_PASSWORD }}
+        SM_HOST: ${{ inputs.certificate-host }}
+        SM_API_KEY: ${{ inputs.api-key }}
+        SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
         SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
-      if: ${{ !contains(env.DEPS_INSTALLED, 'TRUE') }}
 
-    - name: Sign with smctl Windows
+    - name: Sign with smctl on Windows
+      if: runner.os == 'Windows'
+      shell: powershell
       env:
         GITHUB_WORKSPACE: ${{ github.workspace }}
+        SM_HOST: ${{ inputs.certificate-host }}
+        SM_API_KEY: ${{ inputs.api-key }}
+        SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
+        SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
       run: |
-        smctl windows certsync --keypair-alias="key_464138416"
-        $file_path = "${{ env.GITHUB_WORKSPACE }}\${{ inputs.path-to-binary }}"
+        smctl windows certsync --keypair-alias="${{ inputs.keypair-alias }}"
+        $file_path = "${{ env.GITHUB_WORKSPACE }}\${{ inputs.path }}"
         $files_to_sign = @()
         if (Test-Path -Path $file_path -PathType Leaf) {
           $files_to_sign = @([PSCustomObject]@{FullName = $file_path})
@@ -59,35 +98,37 @@ runs:
         else {
           Get-ChildItem -Path $file_path -File -Recurse
           $files_to_sign = @(Get-ChildItem -Path $file_path -File -Recurse)
-        }        
+        }
         foreach ( $f in $files_to_sign )
         {
-          smctl sign --fingerprint ${{ env.SM_CODE_SIGNING_CERT_SHA1_HASH }} --input $f.FullName
+          smctl sign --fingerprint ${{ inputs.certificate-fingerprint }} --input $f.FullName
           smctl sign verify --input $f.FullName
         }
-      if: runner.os == 'Windows'
-      shell: powershell
 
     - name: Install Jsign for Linux signing
+      if: ${{ runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE')) }}
+      shell: bash
       run: |
         curl -fSslL https://github.com/ebourg/jsign/releases/download/3.1/jsign_3.1_all.deb -o jsign_3.1_all.deb
         sudo dpkg --install jsign_3.1_all.deb
-      if: ${{ runner.os == 'Linux' && (!contains(env.DEPS_INSTALLED, 'TRUE')) }}
-      shell: bash
 
-    - name: Sign with smctl Linux
-      run: |
-        file_path="${{ inputs.path-to-binary }}"
-        for f in $(find $file_path -type f); do
-          echo $f
-          smctl sign -v --keypair-alias="key_464138416" --config-file="/tmp/DigiCert One Signing Manager Tools/smtools-linux-x64/pkcs11properties.cfg" --fingerprint "${{ env.SM_CODE_SIGNING_CERT_SHA1_HASH }}" --input "$f"
-        done
+    - name: Sign with smctl on Linux
       if: runner.os == 'Linux'
       shell: bash
+      env:
+        SM_HOST: ${{ inputs.certificate-host }}
+        SM_API_KEY: ${{ inputs.api-key }}
+        SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
+        SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
+      run: |
+        file_path="${{ inputs.path }}"
+        for f in $(find $file_path -type f); do
+          echo $f
+          smctl sign -v --keypair-alias="${{ inputs.keypair-alias }}" --config-file="$PKCS11_CONFIG" --fingerprint "${{ inputs.certificate-fingerprint }}" --input "$f"
+        done
 
     - name: Mark dependencies as installed
-      id: dependency-variable
-      run: |
-        echo "DEPS_INSTALLED=TRUE" >> "$GITHUB_ENV"
-      if: ${{ !contains(env.DEPS_INSTALLED, 'TRUE') }}
+      if: ${{ !contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE') }}
       shell: bash
+      run: |
+        echo "DIGICERT_DEPS_INSTALLED=TRUE" >> "$GITHUB_ENV"
