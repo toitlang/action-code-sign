@@ -1,7 +1,8 @@
 name: "Sign file"
 description: "Sign a file using a DigiCert code signing certificate."
-icon: lock
-color: green
+branding:
+  icon: lock
+  color: green
 
 inputs:
   certificate-host:
