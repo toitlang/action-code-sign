@@ -30,13 +30,13 @@ runs:
   using: "composite"
   steps:
     - name: Setup Certificate on Windows
-      if: ${{ runner.os == 'Windows' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE')) }}
+      if: runner.os == 'Windows' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
       shell: bash
       run: |
         echo "${{ inputs.certificate }}" | base64 --decode > /d/code_signing_github_actions.p12
 
     - name: Setup Certificate on Linux
-      if: ${{ runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE')) }}
+      if: runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
       shell: bash
       run: |
         echo "${{ inputs.certificate }}" | base64 --decode | sudo install -D /dev/stdin /d/code_signing_github_actions.p12
@@ -53,7 +53,7 @@ runs:
         [[ -e "${{ inputs.path }}" ]] || { echo "input 'path' contains a non-existing file or folder: $p"; exit 1; }
 
     - name: Set required variables
-      if: ${{ !contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE') }}
+      if: (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
       shell: bash
       run: |
         if [ "${{ runner.os }}" == "Windows" ]; then
@@ -61,7 +61,7 @@ runs:
         elif [ "${{ runner.os }}" == "Linux" ]; then
           echo "SM_CLIENT_CERT_FILE=/d/code_signing_github_actions.p12" >> "$GITHUB_ENV"
           echo "PKCS11_CONFIG=/tmp/DigiCert One Signing Manager Tools/smtools-linux-x64/pkcs11properties.cfg" >> "$GITHUB_ENV"
-          echo "/tmp/DigiCert One Signing Manager Tools/smtools-linux-x64" >> $GITHUB_PATH
+          # echo "/tmp/DigiCert One Signing Manager Tools/smtools-linux-x64" >> $GITHUB_PATH
         fi
 
     - name: Inputs
@@ -75,7 +75,7 @@ runs:
         echo "path: ${{ inputs.path }}"
 
     - name: Install smtools for Windows
-      if: ${{ runner.os == 'Windows' }} && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
+      if: runner.os == 'Windows' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
       shell: cmd
       env:
         SM_HOST: ${{ inputs.certificate-host }}
@@ -116,7 +116,7 @@ runs:
         }
 
     - name: Install smtools for Linux
-      if: ${{ runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE')) }}
+      if: runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
       shell: bash
       env:
         SM_HOST: ${{ inputs.certificate-host }}
@@ -132,7 +132,7 @@ runs:
         echo "$PWD/smtools-linux-x64" >> $GITHUB_PATH
 
     - name: Install Jsign for Linux signing
-      if: ${{ runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE')) }}
+      if: runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
       shell: bash
       run: |
         curl -fSslL https://github.com/ebourg/jsign/releases/download/3.1/jsign_3.1_all.deb -o jsign_3.1_all.deb
