@@ -74,14 +74,35 @@ runs:
         echo "certificate-fingerprint: ${{ inputs.certificate-fingerprint }}"
         echo "path: ${{ inputs.path }}"
 
-    - name: Configure Digicert Secure Software Manager
-      if: ${{ !contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE') }}
-      uses: digicert/ssm-code-signing@v0.0.2
+    - name: Install smtools
+      if: ${{ runner.os == 'Windows' }}
+      shell: cmd
       env:
         SM_HOST: ${{ inputs.certificate-host }}
         SM_API_KEY: ${{ inputs.api-key }}
         SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
         SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
+      run: |
+        curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download -H "x-api-key:%SM_API_KEY%" -o smtools-windows-x64.msi
+        msiexec /i smtools-windows-x64.msi /quiet /qn
+
+    - name: Configure Digicert
+      if: ${{ runner.os == 'Windows' }}
+      shell: cmd
+      run: |
+        smksp_registrar.exe list
+        smctl.exe keypair ls
+        C:\Windows\System32\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
+        smksp_cert_sync.exe
+
+    # - name: Configure Digicert Secure Software Manager
+    #   if: ${{ !contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE') }}
+    #   uses: digicert/ssm-code-signing@v0.0.2
+    #   env:
+    #     SM_HOST: ${{ inputs.certificate-host }}
+    #     SM_API_KEY: ${{ inputs.api-key }}
+    #     SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
+    #     SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
 
     - name: Sign with smctl on Windows
       if: runner.os == 'Windows'
