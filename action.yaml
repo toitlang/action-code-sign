@@ -56,18 +56,6 @@ runs:
         [[ -s /d/code_signing_github_actions.p12 ]] || { echo "input 'certificate' is empty"; exit 1; }
         [[ -e "${{ inputs.path }}" ]] || { echo "input 'path' contains a non-existing file or folder: $p"; exit 1; }
 
-    - name: Set required variables
-      if: (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
-      shell: bash
-      run: |
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          echo "SM_CLIENT_CERT_FILE=D:\\code_signing_github_actions.p12" >> "$GITHUB_ENV"
-        elif [ "${{ runner.os }}" == "Linux" ]; then
-          echo "SM_CLIENT_CERT_FILE=/d/code_signing_github_actions.p12" >> "$GITHUB_ENV"
-          echo "PKCS11_CONFIG=/tmp/DigiCert One Signing Manager Tools/smtools-linux-x64/pkcs11properties.cfg" >> "$GITHUB_ENV"
-          # echo "/tmp/DigiCert One Signing Manager Tools/smtools-linux-x64" >> $GITHUB_PATH
-        fi
-
     - name: Inputs
       shell: bash
       run: |
