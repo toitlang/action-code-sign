@@ -74,6 +74,23 @@ runs:
         echo "certificate-fingerprint: ${{ inputs.certificate-fingerprint }}"
         echo "path: ${{ inputs.path }}"
 
+    - name: Install smtools for Linux
+      if: runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
+      shell: bash
+      env:
+        SM_HOST: ${{ inputs.certificate-host }}
+        SM_API_KEY: ${{ inputs.api-key }}
+        SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
+        SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
+      run: |
+        # Make a temporary directory to store the smtools
+        INSTALL_DIR=/tmp/DigiCert\ One\ Signing\ Manager\ Tools
+        mkdir -p $INSTALL_DIR
+        cd $INSTALL_DIR
+        curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-linux-x64.tar.gz/download -H "x-api-key:$SM_API_KEY" -o linux-x64.tar.gz
+        tar x -zf linux-x64.tar.gz
+        echo "$PWD/smtools-linux-x64" >> $GITHUB_PATH
+
     - name: Configure Digicert Secure Software Manager
       if: ${{ !contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE') }}
       uses: digicert/ssm-code-signing@v0.0.2
