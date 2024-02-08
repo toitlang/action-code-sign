@@ -135,7 +135,14 @@ runs:
         curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-linux-x64.tar.gz/download -H "x-api-key:$SM_API_KEY" -o linux-x64.tar.gz
         tar x -zf linux-x64.tar.gz
         echo "$PWD/smtools-linux-x64" >> $GITHUB_PATH
+        # Create pkcs11properties.cfg
+        echo `name=signingmanager\r\nlibrary=$PWD/smpkcs11.so\r\nslotListIndex=0` >> pkcs11properties.cfg
         echo "PKCS11_CONFIG=$PWD/pkcs11properties.cfg" >> "$GITHUB_ENV"
+
+    - name: Create pkcs11properties.cfg
+      if: runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
+      shell: bash
+      run: |
 
     - name: Install Jsign for Linux signing
       if: runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
