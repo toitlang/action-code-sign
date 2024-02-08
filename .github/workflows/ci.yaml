@@ -110,7 +110,7 @@ jobs:
             smctl sign verify --input $file 2>&1 > output.txt
             cat output.txt
             grep -v "Number of errors:" output.txt || exit 1
+            exit 1
             # signtool verify /pa /v $file
           done
 
-          exit 1
