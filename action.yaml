@@ -74,6 +74,13 @@ runs:
         echo "certificate-fingerprint: ${{ inputs.certificate-fingerprint }}"
         echo "path: ${{ inputs.path }}"
 
+    - name: Install smtools by hand
+      if: ${{ runner.os == 'Windows' }}
+      shell: cmd
+      run: |
+        curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download -H "x-api-key:%SM_API_KEY%" -o smtools-windows-x64.msi
+        msiexec /i smtools-windows-x64.msi /quiet /qn
+
     - name: Configure Digicert Secure Software Manager
       if: ${{ !contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE') }}
       uses: digicert/ssm-code-signing@v0.0.2
