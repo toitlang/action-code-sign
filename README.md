@@ -30,8 +30,11 @@ on:
 
 jobs:
   run-action:
-    runs-on: windows-2022
+    runs-on: windows-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Run the action for a single file
         uses: toitlang/action-code-sign@v1
         with:
@@ -56,10 +59,10 @@ on:
 
 jobs:
   run-action-linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run the action for multiple files in directory
         uses: toitlang/action-code-sign@v1

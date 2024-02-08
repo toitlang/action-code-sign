@@ -125,7 +125,7 @@ runs:
         # Create pkcs11properties.cfg
         echo -e "name=signingmanager\r\nlibrary=$PWD/smtools-linux-x64/smpkcs11.so\r\nslotListIndex=0" >> pkcs11properties.cfg
         cat pkcs11properties.cfg
-        # echo "PKCS11_CONFIG=$PWD/pkcs11properties.cfg" >> "$GITHUB_ENV"
+        echo "PKCS11_CONFIG=$PWD/pkcs11properties.cfg" >> "$GITHUB_ENV"
 
     - name: Create pkcs11properties.cfg
       if: runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
