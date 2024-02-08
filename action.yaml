@@ -113,6 +113,7 @@ runs:
       if: ${{ runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE')) }}
       shell: bash
       run: |
+        cat "/tmp/DigiCert One Signing Manager Tools/smtools-linux-x64/pkcs11properties.cfg"
         curl -fSslL https://github.com/ebourg/jsign/releases/download/3.1/jsign_3.1_all.deb -o jsign_3.1_all.deb
         sudo dpkg --install jsign_3.1_all.deb
 
