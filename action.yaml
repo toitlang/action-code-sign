@@ -98,6 +98,12 @@ runs:
     - name: Configure Digicert
       if: ${{ runner.os == 'Windows' }}
       shell: cmd
+      env:
+        GITHUB_WORKSPACE: ${{ github.workspace }}
+        SM_HOST: ${{ inputs.certificate-host }}
+        SM_API_KEY: ${{ inputs.api-key }}
+        SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
+        SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
       run: |
         smksp_registrar.exe list
         smctl.exe keypair ls
