@@ -95,20 +95,20 @@ runs:
         echo "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools" >> $GITHUB_PATH
         echo "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools" >> $GITHUB_PATH
 
-    - name: Configure Digicert
-      if: ${{ runner.os == 'Windows' }}
-      shell: cmd
-      env:
-        GITHUB_WORKSPACE: ${{ github.workspace }}
-        SM_HOST: ${{ inputs.certificate-host }}
-        SM_API_KEY: ${{ inputs.api-key }}
-        SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
-        SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
-      run: |
-        smksp_registrar.exe list
-        smctl.exe keypair ls
-        C:\Windows\System32\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
-        smksp_cert_sync.exe
+    # - name: Configure Digicert
+    #   if: ${{ runner.os == 'Windows' }}
+    #   shell: cmd
+    #   env:
+    #     GITHUB_WORKSPACE: ${{ github.workspace }}
+    #     SM_HOST: ${{ inputs.certificate-host }}
+    #     SM_API_KEY: ${{ inputs.api-key }}
+    #     SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
+    #     SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
+    #   run: |
+    #     smksp_registrar.exe list
+    #     smctl.exe keypair ls
+    #     C:\Windows\System32\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
+    #     smksp_cert_sync.exe
 
     # - name: Configure Digicert Secure Software Manager
     #   if: ${{ !contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE') }}
