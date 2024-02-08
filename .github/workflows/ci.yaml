@@ -108,6 +108,6 @@ jobs:
             echo "Verifying $file"
             smctl sign verify --input $file 2>&1 > output.txt
             cat output.txt
-            grep -v "exit status 1" output.txt || exit 1
+            grep -v "Number of errors:" output.txt || exit 1
             # signtool verify /pa /v $file
           done
