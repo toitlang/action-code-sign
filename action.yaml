@@ -40,6 +40,11 @@ runs:
       shell: bash
       run: |
         echo "${{ inputs.certificate }}" | base64 --decode | sudo install -D /dev/stdin /d/code_signing_github_actions.p12
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          echo "SM_CLIENT_CERT_FILE=D:\\code_signing_github_actions.p12" >> "$GITHUB_ENV"
+        elif [ "${{ runner.os }}" == "Linux" ]; then
+          echo "SM_CLIENT_CERT_FILE=/d/code_signing_github_actions.p12" >> "$GITHUB_ENV"
+        fi
 
 
     - name: Check that all required inputs are given
@@ -130,6 +135,7 @@ runs:
         curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-linux-x64.tar.gz/download -H "x-api-key:$SM_API_KEY" -o linux-x64.tar.gz
         tar x -zf linux-x64.tar.gz
         echo "$PWD/smtools-linux-x64" >> $GITHUB_PATH
+        echo "PKCS11_CONFIG=$PWD/pkcs11properties.cfg" >> "$GITHUB_ENV"
 
     - name: Install Jsign for Linux signing
       if: runner.os == 'Linux' && (!contains(env.DIGICERT_DEPS_INSTALLED, 'TRUE'))
