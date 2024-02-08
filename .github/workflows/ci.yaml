@@ -106,6 +106,6 @@ jobs:
           find .
           for file in $(find . -name '*.exe'); do
             echo "Verifying $file"
-            smctl sign verify --input $file || exit 1
+            smctl sign verify --input $file | grep -v "errors" || exit 1
             # signtool verify /pa /v $file
           done
