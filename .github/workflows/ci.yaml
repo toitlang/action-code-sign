@@ -103,6 +103,7 @@ jobs:
           SM_API_KEY: ${{ env.SECRET_API_KEY }}
           SM_CLIENT_CERT_PASSWORD: ${{ env.SECRET_PASSWORD }}
         run: |
+          set -e
           find .
           for file in $(find . -name '*.exe'); do
             echo "Verifying $file"
