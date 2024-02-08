@@ -85,8 +85,8 @@ runs:
       run: |
         # Make a temporary directory to store the smtools
         INSTALL_DIR=/tmp/DigiCert\ One\ Signing\ Manager\ Tools
-        mkdir -p $INSTALL_DIR
-        cd $INSTALL_DIR
+        mkdir -p "$INSTALL_DIR"
+        cd "$INSTALL_DIR"
         curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-linux-x64.tar.gz/download -H "x-api-key:$SM_API_KEY" -o linux-x64.tar.gz
         tar x -zf linux-x64.tar.gz
         echo "$PWD/smtools-linux-x64" >> $GITHUB_PATH
