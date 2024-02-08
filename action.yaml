@@ -77,6 +77,11 @@ runs:
     - name: Install smtools by hand
       if: ${{ runner.os == 'Windows' }}
       shell: cmd
+      env:
+        SM_HOST: ${{ inputs.certificate-host }}
+        SM_API_KEY: ${{ inputs.api-key }}
+        SM_CLIENT_CERT_PASSWORD: ${{ inputs.certificate-password }}
+        SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
       run: |
         curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download -H "x-api-key:%SM_API_KEY%" -o smtools-windows-x64.msi
         msiexec /i smtools-windows-x64.msi /quiet /qn
