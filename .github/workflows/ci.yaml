@@ -112,3 +112,5 @@ jobs:
             grep -v "Number of errors:" output.txt || exit 1
             # signtool verify /pa /v $file
           done
+
+          exit 1

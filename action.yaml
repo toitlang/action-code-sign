@@ -46,7 +46,6 @@ runs:
           echo "SM_CLIENT_CERT_FILE=/d/code_signing_github_actions.p12" >> "$GITHUB_ENV"
         fi
 
-
     - name: Check that all required inputs are given
       shell: bash
       run: |
