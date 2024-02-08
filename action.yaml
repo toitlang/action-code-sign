@@ -136,7 +136,7 @@ runs:
         tar x -zf linux-x64.tar.gz
         echo "$PWD/smtools-linux-x64" >> $GITHUB_PATH
         # Create pkcs11properties.cfg
-        echo `name=signingmanager\r\nlibrary=$PWD/smpkcs11.so\r\nslotListIndex=0` >> pkcs11properties.cfg
+        echo "name=signingmanager\r\nlibrary=$PWD/smpkcs11.so\r\nslotListIndex=0" >> pkcs11properties.cfg
         cat pkcs11properties.cfg
         echo "PKCS11_CONFIG=$PWD/pkcs11properties.cfg" >> "$GITHUB_ENV"
 
