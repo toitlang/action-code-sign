@@ -14,7 +14,9 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, ubuntu-20.04, windows-latest]
+
     runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -73,13 +75,22 @@ jobs:
     runs-on: windows-latest
     needs: test-action
     steps:
-      # Download signtool.
-      - name: Configure Digicert Secure Software Manager
-        uses: digicert/ssm-code-signing@v0.0.2
+      - name: Install smtools
+        shell: cmd
         env:
-          SM_HOST: ${{ env.DIGICERT_HOST }}
           SM_API_KEY: ${{ env.SECRET_API_KEY }}
-          SM_CLIENT_CERT_PASSWORD: ${{ env.SECRET_PASSWORD }}
+        run: |
+          curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download -H "x-api-key:%SM_API_KEY%" -o smtools-windows-x64.msi
+          msiexec /i smtools-windows-x64.msi /quiet /qn
+
+      - name: Set variables
+        shell: bash
+        id: variables
+        run: |
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          echo "C:\Program Files (x86)\Windows Kits\10\App Certification Kit" >> $GITHUB_PATH
+          echo "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools" >> $GITHUB_PATH
+          echo "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools" >> $GITHUB_PATH
 
       - name: Download signed files
         uses: actions/download-artifact@v3
@@ -93,9 +104,13 @@ jobs:
           SM_API_KEY: ${{ env.SECRET_API_KEY }}
           SM_CLIENT_CERT_PASSWORD: ${{ env.SECRET_PASSWORD }}
         run: |
+          set -e
           find .
           for file in $(find . -name '*.exe'); do
             echo "Verifying $file"
-            smctl sign verify --input $file
+            smctl sign verify --input $file 2>&1 > output.txt
+            cat output.txt
+            grep "Number of errors:" output.txt && exit 1 || echo "$file verified"
             # signtool verify /pa /v $file
           done
+
