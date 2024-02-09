@@ -66,7 +66,7 @@ jobs:
       - name: Upload signed files
         uses: actions/upload-artifact@v4
         with:
-          name: signed-files
+          name: signed-files-${{ matrix.os }}
           path: |
             ${{ env.TEST_DIR_SINGLE }}
             ${{ env.TEST_DIR_MULTI }}
@@ -93,9 +93,19 @@ jobs:
           echo "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools" >> $GITHUB_PATH
 
       - name: Download signed files
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: signed-files
+          name: signed-files-windows-latest
+
+      - name: Download signed files
+        uses: actions/download-artifact@v4
+        with:
+          name: signed-files-ubuntu-latest
+
+      - name: Download signed files
+        uses: actions/download-artifact@v4
+        with:
+          name: signed-files-ubuntu-20.04
 
       - name: Verify signatures
         shell: bash
